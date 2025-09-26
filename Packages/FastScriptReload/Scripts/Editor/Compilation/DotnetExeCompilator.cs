@@ -39,7 +39,7 @@ namespace FastScriptReload.Editor.Compilation
                 
             _dotnetExePath = FindFileOrThrow(dotnetExecutablePath);
             _cscDll = FindFileOrThrow("csc.dll"); //even on mac/linux need to find dll and use, not no extension one
-            _tempFolder = Path.GetTempPath();
+            _tempFolder = Path.GetFullPath("Temp/Fast Script Reload/DynamicCompilation/");
             
             EditorApplication.playModeStateChanged += obj =>
             {

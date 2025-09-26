@@ -28,9 +28,9 @@ namespace FastScriptReload.Runtime
         static void Init()
         {
 #if UNITY_EDITOR
-            LastDetourFilePath = Path.GetTempPath() + Application.productName + "-last-detour.txt";
-            foreach (var c in Path.GetInvalidFileNameChars()) 
-            { 
+            LastDetourFilePath = Path.GetFullPath($"{UnityEngine.Application.dataPath}/../Temp/Fast Script Reload/{Application.productName}-last-detour.txt");
+            foreach (var c in Path.GetInvalidFileNameChars())
+            {
                 LastDetourFilePath = LastDetourFilePath.Replace(c, '-'); 
             }
 #else
