@@ -781,7 +781,7 @@ Tick this box to use custom implementation.", MessageType.Info);
         );
         
         public static readonly ToggleProjectEditorPreferenceDefinition EnableExperimentalAddedFieldsSupport = new ToggleProjectEditorPreferenceDefinition(
-            "(Experimental) Enable runtime added field support", "EnableExperimentalAddedFieldsSupport", true,
+            "(Experimental) Enable runtime added field support", "EnableExperimentalAddedFieldsSupport", false,
             (object newValue, object oldValue) =>
             {
                 FastScriptReloadManager.Instance.AssemblyChangesLoaderEditorOptionsNeededInBuild.EnableExperimentalAddedFieldsSupport = (bool)newValue;
@@ -795,7 +795,7 @@ Tick this box to use custom implementation.", MessageType.Info);
             "(Experimental) Enable Hot-Reload outside of play mode", "EnableExperimentalEditorHotReloadSupport", false);
         
         public static readonly ToggleProjectEditorPreferenceDefinition EnableCustomFileWatcher = new ToggleProjectEditorPreferenceDefinition(
-            "(Experimental) Use custom file watchers", "EnableCustomFileWatcher", false);
+            "(Experimental) Use custom file watchers", "EnableCustomFileWatcher", true);
 
         //TODO: potentially that's just a normal settings (also in playmode) - but in playmode user is unlikely to make this many changes
         public static readonly IntProjectEditorPreferenceDefinition TriggerDomainReloadIfOverNDynamicallyLoadedAssembles = new IntProjectEditorPreferenceDefinition(
