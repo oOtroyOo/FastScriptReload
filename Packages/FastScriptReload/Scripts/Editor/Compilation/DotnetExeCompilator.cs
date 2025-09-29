@@ -36,7 +36,7 @@ namespace FastScriptReload.Editor.Compilation
 #else
             const string dotnetExecutablePath = "dotnet"; //mac and linux, no extension
 #endif
-                
+
             _dotnetExePath = FindFileOrThrow(dotnetExecutablePath);
             _cscDll = FindFileOrThrow("csc.dll"); //even on mac/linux need to find dll and use, not no extension one
             _tempFolder = Path.GetFullPath(UnityEngine.Application.dataPath + "/../Temp/Fast Script Reload/DynamicCompilation/");
@@ -45,12 +45,20 @@ namespace FastScriptReload.Editor.Compilation
             {
                 Directory.CreateDirectory(_tempFolder);
             }
+
+            foreach (var fileToCleanup in _createdFilesToCleanUp)
+            {
+                if (File.Exists(fileToCleanup))
+                    File.Delete(fileToCleanup);
+            }
+
+            _createdFilesToCleanUp.Clear();
             EditorApplication.playModeStateChanged += obj =>
             {
                 if (obj == PlayModeStateChange.ExitingPlayMode && _createdFilesToCleanUp.Any())
                 {
                     LoggerScoped.LogDebug($"Removing temporary files: [{string.Join(",", _createdFilesToCleanUp)}]");
-                    
+
                     foreach (var fileToCleanup in _createdFilesToCleanUp)
                     {
                         File.Delete(fileToCleanup);
@@ -69,7 +77,8 @@ namespace FastScriptReload.Editor.Compilation
                     .FirstOrDefault();
                 if (foundFile == null)
                 {
-                    throw new Exception($"Unable to find '{fileName}', make sure Editor version supports it. You can also add preprocessor directive 'FastScriptReload_CompileViaMCS' which will use Mono compiler instead");
+                    throw new Exception(
+                        $"Unable to find '{fileName}', make sure Editor version supports it. You can also add preprocessor directive 'FastScriptReload_CompileViaMCS' which will use Mono compiler instead");
                 }
 
                 return foundFile;
@@ -81,6 +90,25 @@ namespace FastScriptReload.Editor.Compilation
             var sourceCodeCombinedFilePath = string.Empty;
             try
             {
+                if (!Directory.Exists(_tempFolder))
+                {
+                    Directory.CreateDirectory(_tempFolder);
+                }
+                foreach (var fileToCleanup in Directory.GetFiles(_tempFolder))
+                {
+                    if (File.Exists(fileToCleanup))
+                    {
+                        try
+                        {
+                            File.Delete(fileToCleanup);
+                        }
+                        catch (Exception e)
+                        {
+                            // ignored
+                        }
+                    }
+                }
+
                 var asmName = Guid.NewGuid().ToString().Replace("-", "");
                 var rspFile = _tempFolder + $"{asmName}.rsp";
                 var assemblyAttributeFilePath = _tempFolder + $"{asmName}.DynamicallyCreatedAssemblyAttribute.cs";
@@ -103,8 +131,10 @@ namespace FastScriptReload.Editor.Compilation
                     () => CreateAssemblyCopiesWithInternalsVisibleTo(createSourceCodeCombinedResult, asmName),
                     out var createInternalVisibleToAsmElapsedMilliseconds);
 
-                var shouldAddUnsafeFlag = createSourceCodeCombinedResult.SourceCode.Contains("unsafe"); //TODO: not ideal as 'unsafe' can be part of comment, not code. But compiling with that flag in more cases shouldn't cause issues
-                var rspFileContent = GenerateCompilerArgsRspFileContents(outLibraryPath, sourceCodeCombinedFilePath, assemblyAttributeFilePath, 
+                var shouldAddUnsafeFlag =
+                    createSourceCodeCombinedResult.SourceCode
+                        .Contains("unsafe"); //TODO: not ideal as 'unsafe' can be part of comment, not code. But compiling with that flag in more cases shouldn't cause issues
+                var rspFileContent = GenerateCompilerArgsRspFileContents(outLibraryPath, sourceCodeCombinedFilePath, assemblyAttributeFilePath,
                     originalAssemblyPathToAsmWithInternalsVisibleToCompiled, shouldAddUnsafeFlag);
                 CreateFileAndTrackAsCleanup(rspFile, rspFileContent, _createdFilesToCleanUp);
                 CreateFileAndTrackAsCleanup(assemblyAttributeFilePath, DynamicallyCreatedAssemblyAttributeSourceCode, _createdFilesToCleanUp);
@@ -224,6 +254,12 @@ You can also:
 
             foreach (var referenceToAdd in ResolveReferencesToAdd(new List<string>()))
             {
+                // 特殊处理Asset内重复dll
+                if (referenceToAdd.Contains("Assets\\EngineCenter\\Tool\\Plugins\\System.Drawing.dl"))
+                {
+                    continue;
+                }
+
                 if (originalAssemblyPathToAsmWithInternalsVisibleToCompiled.TryGetValue(referenceToAdd, out var asmWithInternalsVisibleTo))
                 {
                     //Changed assembly have InternalsVisibleTo added to it to avoid any issues where types are defined internal

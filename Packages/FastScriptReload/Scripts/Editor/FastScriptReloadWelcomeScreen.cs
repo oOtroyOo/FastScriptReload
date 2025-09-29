@@ -755,7 +755,7 @@ Tick this box to use custom implementation.", MessageType.Info);
         );
         
         public static readonly ToggleProjectEditorPreferenceDefinition IsDidFieldsOrPropertyCountChangedCheckDisabled = new ToggleProjectEditorPreferenceDefinition(
-            "Disable added/removed fields check", "IsDidFieldsOrPropertyCountChangedCheckDisabled", false,
+            "Disable added/removed fields check", "IsDidFieldsOrPropertyCountChangedCheckDisabled", true,
             (object newValue, object oldValue) =>
             {
                 FastScriptReloadManager.Instance.AssemblyChangesLoaderEditorOptionsNeededInBuild.IsDidFieldsOrPropertyCountChangedCheckDisabled = (bool)newValue;
